@@ -4,32 +4,32 @@
 
 main:
 	# Register assignments
-	# s0 = heap, $s1 = size, $s2 = i ( counter )
+	# s0 = array, $s1 = size, $s2 = i ( counter )
 	
-	la $s0, heap 			# $s0 = heap
+	la $s0, array 			# $s0 = array
 	lw $s1, size			# $s1 = size
 	li $s2, 0			# i = 0
 	
 main_loop:
-	move $a0, $s0			# Argument 1: &heap
+	bge $s2, $s1, main_end		# if (i >= size) goto main_end label
+	move $a0, $s0			# Argument 1: &array
 	move $a1, $s2			# Argument 2: i
-	jal input			# input(&heap, i)
+	jal input			# input(&array, i)
 	
 	addi $s2, $s2, 1		# i = i + 1
 	
-	move $a0, $s0			# Argument 1: &heap
+	move $a0, $s0			# Argument 1: &array
 	move $a1, $s2			# Argument 2: i
-	jal heapSort			# heapSort(&heap, i)
+	jal heapSort			# heapSort(&array, i)
 	
-	move $a0, $s0			# Argument 1: &heap
+	move $a0, $v0			# Argument 1: $v0 [ $v0 = heapSort(&array, i) ]
 	move $a1, $s2			# Argument 2: i
-	jal print			# print(&heap, i)
+	jal print			# print(&array, i)
 	
-	bne $s2, $s1, main_loop		# if (i != size) goto main_loop
-	j main_end			# if (i == size) goto exit
+	j main_loop			# goto main_loop label
 	
-# FUNCTION: void input(int* heap,int index)
-# Arguments are stored in $a0 (heap), $a1 (index)
+# FUNCTION: void input(int* array,int index)
+# Arguments are stored in $a0 (array), $a1 (index)
 # Return value is void
 # Return address is stored in $ra (put there by jal instruction)
 # Typical function operation is:
@@ -46,18 +46,17 @@ input:
 	sw $s2, 0($sp)			# Save $s2
 	
 	# Reg assignment
-	# $s0 = heap, $s1 = index, $s2 = i ( indexing )
+	# $s0 = array, $s1 = index, $s2 = i ( indexing )
 	
-	move $s0, $a0			# heap = $a0
+	move $s0, $a0			# array = $a0
 	move $s1, $a1			# index = $a1
-	li $s2, 0			# Initialize indexing ( i )
 	
 	mul $s2, $s1,4			# i = index * 4
-	add $s0, $s0, $s2		# heap += i
+	add $s0, $s0, $s2		# array += i <=> array = &array[index]
 	
 	li $v0,5			# read_int syscall code = 5
 	syscall				# syscall results returned in $v0
-	sw $v0, 0($s0)			# *heap = $v0
+	sw $v0, 0($s0)			# *array = $v0 <=> array[index] = $v0
 	
 	# Restore saved register values from stack in opposite order
 	# This is POP'ing from the stack
@@ -72,9 +71,9 @@ input:
 	jr $ra				# Jump to addr stored in $ra
 	
 	
-# FUNCTION: void heapSort(int* heap,int size)
-# Arguments are stored in $a0 (heap), $a1 (sizex)
-# Return value is void
+# FUNCTION: int* heapSort(int* array,int size)
+# Arguments are stored in $a0 (array), $a1 (size)
+# Return value is $v0 ( result array )
 # Return address is stored in $ra (put there by jal instruction)
 # Typical function operation is:
 heapSort:
@@ -92,71 +91,78 @@ heapSort:
 	sw $s4, 0($sp)			# Save $s4
 	
 	# Reg assignment
-	# $s0 = heap, $s1 = bHeap ( immutable, for restore ), $s2 = size
-    	# $s3 = i ( counter ) , $s4 = j ( indexing )
+	# $s0 = array, $s1 = bArray ( immutable, for restore ), $s2 = size
+    	# $s3 = i ( counter ) , $s4 = j ( indexing ) $t0 = temp ( temporary value )
 
-	move $s0, $a0			# heap = $a0
-    	move $s1, $a0			# bHeap = $a0
+	move $s0, $a0			# array = $a0
+    	move $s1, $a0			# bArray = $a0
 	move $s2, $a1			# size = $a1
+	la $v0, result			# $v0 = result ( empty array )
 	
-	move $s3, $s2			# i = size
-	srl $s3, $s3, 1			# i = i / 2
-	addi $s3, $s3, -1		# i = i - 1
+	move $s3, $s2			# 1. i = size
+	srl $s3, $s3, 1			# 2. i = i / 2
+	addi $s3, $s3, -1		# 3. i = i - 1 
 	
 	# normal array to max heap
 	maxheap_loop:
 	blt $s3, $zero, ordering_set	# if ( i < 0 ) goto ordering_set label
 	
-	move $a0, $s0			# Argument 1 : &heap
-	move $a1, $s2			# Arugment 2 : size
+	move $a0, $s0			# Argument 1 : &array
+	move $a1, $s2			# Argument 2 : size
 	move $a2, $s3			# Arguemnt 3 : i
-	jal heapify			# heapify(&heap, size, i)
+	jal heapify			# heapify(&array, size, i)
 	addi $s3, $s3, -1		# i = i - 1
 	j maxheap_loop			# jump to maxheap_loop label
 	
-	# setting for next 
+	# setting for ordering_loop
 	ordering_set:
 	
 	move $s3, $s2			# i = size
 	addi $s3, $s3, -1		# i = i - 1
-	
+
 	mul $s4, $s3, 4			# j = i * 4
-	add $s0, $s0, $s4		# heap += j
-	
+	add $s0, $s0, $s4		# array += j <=> array = &array[size-1]
+
 	# extract max elements from heap
 	ordering_loop:
-	beq $s3, $zero, heapSort_end	# if ( i == 0 ) goto heapSort_end label
+	blt $s3, $zero, heapSort_end	# if ( i < 0 ) goto heapSort_end label
 	
-	move $a0, $s1			# Argument 1 : &heap[0]
-	move $a1, $s0			# Argument 2 : &heap[i]
-	jal swap			# swap(&heap[0], &heap[i])
+	lw $t0, 0($s1)			# temp = &array[0]
+	sw $t0, 0($v0)			# *result = temp
+	addi $v0, $v0, 4		# result++
 	
-	move $a0, $s1			# Argument 1 : &heap
+	move $a0, $s1			# Argument 1 : &array[0]
+	move $a1, $s0			# Argument 2 : &array[i]
+	jal swap			# swap(&array[0], &array[i])
+	
+	move $a0, $s1			# Argument 1 : &array
 	move $a1, $s3			# Argument 2 : i
-	move $a2, $zero			# Arugment 3 : 0
-	jal heapify			# heapify(&heap, i, 0)
+	move $a2, $zero			# Argument 3 : 0
+	jal heapify			# heapify(&array, i, 0)
 	
 	addi $s3, $s3, -1		# i = i - 1	
-	addi $s0, $s0, -4		# heap--
+	addi $s0, $s0, -4		# array-- <=> array = &array[i]
 	j ordering_loop			# jump to ordering_loop label
 		
 	# Restore saved register values from stack in opposite order
 	# This is POP'ing from the stack
 	
 	heapSort_end:
+	la $v0, result			# restore result start address
+	
 	lw $ra, 20($sp)			# Restore $ra
 	lw $s0, 16($sp)			# Restore $s0
-	lw $s1, 12($sp)			# Restore $s2
-	lw $s2, 8($sp)			# Restore $s3
-	lw $s3, 4($sp)			# Restore $s4
-	lw $s4, 0($sp)			# Restore $s1
+	lw $s1, 12($sp)			# Restore $s1
+	lw $s2, 8($sp)			# Restore $s2
+	lw $s3, 4($sp)			# Restore $s3
+	lw $s4, 0($sp)			# Restore $s4
 	addi $sp, $sp, 24		# Adjust stack pointer
 
 	# Return from function
 	jr $ra				# Jump to addr stored in $ra	
 
-# FUNCTION: void heapify(int* heap,int size, int index)
-# Arguments are stored in $a0 (heap), $a1 (size), $a2 (index)
+# FUNCTION: void heapify(int* array,int size, int index)
+# Arguments are stored in $a0 (array), $a1 (size), $a2 (index)
 # Return value is void
 # Return address is stored in $ra (put there by jal instruction)
 # Typical function operation is:
@@ -177,14 +183,14 @@ heapify:
 	sw $s6, 0($sp)			# Save $s6
 
     	# Reg assignment
-	# $s0 = heap, , $s1 = bHeap, $s2 = size, $s3 = index, $s4 = parent, $s5 = left, $s6 = right
-	# $t0 = i ( indexing ), t1 = &heap[index], $t2 = &heap[paraent], &t3 = &heap[left], &t4 = &heap[right]
-	# t5 = heap[parent], $t6 = heap[left], $t7 = heap[Right]
+	# $s0 = array, $s1 = bArray, $s2 = size, $s3 = index, $s4 = parent, $s5 = left, $s6 = right
+	# $t0 = i ( indexing ), $t1 = &array[index], $t2 = &array[paraent], &t3 = &array[left], &t4 = &array[right]
+	# $t5 = array[parent], $t6 = array[left], $t7 = array[Right]
 	
-	move $s0, $a0			# heap = $a0
-	move $s1, $a0			# bHeap = $a0
+	move $s0, $a0			# array = $a0
+	move $s1, $a0			# bArray = $a0
 	move $s2, $a1			# size = $a1
-	move $s3, $a2			# index = $s3
+	move $s3, $a2			# index = $a2
 	
 	move $s4, $s3			# parent = index
 	move $s5, $s4			# left = parent
@@ -196,23 +202,23 @@ heapify:
 	move $t0, $s3			# i = index
 	mul $t0, $t0, 4			# i = i * 4
 	
-	add $s0, $s0, $t0       	# heap += i
-	move $t1, $s0			# $t1 = &heap[index]
-	move $t2, $s0			# $t2 = &heap[parent]
+	add $s0, $s0, $t0       	# array += i
+	move $t1, $s0			# $t1 = &array[index]
+	move $t2, $s0			# $t2 = &array[parent]
 	
-	add $s0, $s0, $t0		# heap += i
-	addi $s0, $s0, 4		# heap++
-	move $t3, $s0			# $t3 = &heap[left]
+	add $s0, $s0, $t0		# array += i
+	addi $s0, $s0, 4		# array++
+	move $t3, $s0			# $t3 = &array[left]
 	
-	addi $s0, $s0, 4       		# heap++
-	move $t4, $s0 			# $t4 = &heap[right]
+	addi $s0, $s0, 4       		# array++
+	move $t4, $s0 			# $t4 = &array[right]
 	
 	bge $s5, $s2, branch2		# if ( left >=  size ) goto branch2
 	
-	lw $t5, 0($t2)			# $t5 = heap[parent]
-	lw $t6, 0($t3)			# $t6 = heap[left]
+	lw $t5, 0($t2)			# $t5 = array[parent]
+	lw $t6, 0($t3)			# $t6 = array[left]
 	
-	bge $t5, $t6, branch2		# if ( heap[paraent] >= heap[left] ) goto branch2 label
+	bge $t5, $t6, branch2		# if ( array[paraent] >= array[left] ) goto branch2 label
 	move $s4, $s5           	# parent = left
 	
 	branch2:	
@@ -220,12 +226,12 @@ heapify:
 
 	move $t0, $s4           	# i = parent
 	mul $t0, $t0, 4         	# i = i * 4
-	add $t2, $s1, $t0       	# $t2 = heap[parent]
+	add $t2, $s1, $t0       	# $t2 = array[parent]
 	
-	lw $t5, 0($t2)			# $t5 = heap[parent]
-	lw $t7, 0($t4)			# $t7 = heap[right]
+	lw $t5, 0($t2)			# $t5 = array[parent]
+	lw $t7, 0($t4)			# $t7 = array[right]
 	
-	bge $t5, $t7, branch3		# if ( heap[parent] >= heap[right]) goto branch3 label
+	bge $t5, $t7, branch3		# if ( array[parent] >= array[right]) goto branch3 label
 	move $s4, $s6           	# parent = right
 	
 	branch3:
@@ -234,16 +240,16 @@ heapify:
 	
 	action:
 	mul $t0, $s4, 4         	# i = 4 * parent
-	add $t2, $a0, $t0		# $t2 = heap[parent]
+	add $t2, $a0, $t0		# $t2 = array[parent]
 	
-	move $a0, $t2			# Argument 1: &heap[parent]
-	move $a1, $t1			# Argument 2: &heap[index]
-	jal swap			# swap(&heap[parent], &heap[index])	
+	move $a0, $t2			# Argument 1: &array[parent]
+	move $a1, $t1			# Argument 2: &array[index]
+	jal swap			# swap(&array[parent], &array[index])	
 	
-	move $a0, $s1			# Argument 1: &heap
+	move $a0, $s1			# Argument 1: &array
 	move $a1, $s2			# Argument 2: size
 	move $a2, $s4			# Argument 3: parent
-	jal heapify             	# heapify(&heap, size, parent)
+	jal heapify             	# heapify(&array, size, parent)
 	
 	# Restore saved register values from stack in opposite order
 	# This is POP'ing from the stack
@@ -263,8 +269,8 @@ heapify:
 	jr $ra			        # Jump to addr stored in $ra	
 	
 	
-# FUNCTION: void print(int* heap,int size)
-# Arguments are stored in $a0 (heap), $a1 (size)
+# FUNCTION: void print(int* array,int size)
+# Arguments are stored in $a0 (array), $a1 (size)
 # Return value is void
 # Return address is stored in $ra (put there by jal instruction)
 # Typical function operation is:
@@ -281,9 +287,9 @@ print:
 	sw $s2, 0($sp)			# Save $s2
 	
 	# Reg assignment
-	# $s0 = heap, $s1 = size , $s2 = i ( counter )
+	# $s0 = array, $s1 = size , $s2 = i ( counter )
 	
-	move $s0, $a0			# heap = $a0
+	move $s0, $a0			# array = $a0
 	move $s1, $a1			# size = $a1
 	li $s2, 0			# i = 0
 		
@@ -293,7 +299,7 @@ print_loop:
 	syscall
 	
 	addi $s2, $s2, 1		# i = i + 1
-	addi $s0, $s0, 4		# heap++
+	addi $s0, $s0, 4		# array++
 	
 	beq $s2, $s1, print_end		# if (i == size) goto print_end label
 		
@@ -367,7 +373,8 @@ main_end:
 
 .data
 
-heap: 		.space 40 		# Heap Array Memory Size = Heap Array length * 4
+array: 		.space 40 		# Heap Array Memory Size = Heap Array length * 4
+result:		.space 40 		# Result Array Memroy Size = Heap Array Legnth * 4
 size: 		.word 10		# Heap Array length
 delimiter: 	.asciiz " "		# delimiter for heap array elements printing
 newLine:	.asciiz "\n"		# line feed
