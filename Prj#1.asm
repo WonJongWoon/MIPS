@@ -90,9 +90,9 @@ multiplication:
 	
 	multiplication_end:
 	
-	addi $t3, $s3, -1
-	mul $t3, $t3, 4
-	sub $v0, $v0, $t3
+	addi $t3, $s3, -1			# i = size - 1
+	mul $t3, $t3, 4				# i = i * 4
+	sub $v0, $v0, $t3			# v0 -= i
 	
 	
 	lw $ra, 28($sp)				# Restore $ra
