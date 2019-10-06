@@ -11,10 +11,12 @@
 ## Description #2
 
 ### Problem 1 : Calculate Ax = b ( A : 3 x 3, x : 3 x 1 ) - 40 point
-+ A 행렬, v 벡터의 값은 임의로 설정 ( 미리 저장 or 실행 후 입력 )
++ 정수 A 행렬, v 벡터의 값은 임의로 설정 ( 미리 저장 or 실행 후 입력 )
 ### Problem 2 : Calculate an inverse of A ( A : 3 x 3 ) - 30 point
-+ A 행렬의 값은 임의로 설정 ( 미리 저장 or 실행 후 입력 )
++ 정수 A 행렬의 값은 임의로 설정 ( 미리 저장 or 실행 후 입력 )
 + Single-precision floating point (float) 연산 결과 출력
++ MIPS Single-precision 정보는 아래 사이트를 참고하시오.
+    + <http://howardhuang.us/teaching/cs232/10-MIPS-floating-point-arithmetic.pdf>
 ### Problem 3 : Heap Sort - 30 point
 + 반복적으로 정수가 하나씩 입력되면 ( 최소 5회 ),<br/>
  Heap Sort Algorhithm으로 내림차순 정렬 후 출력하는 프로그램을 작성하시오.
@@ -35,10 +37,7 @@
 
 ## What to submit, Evaluation rate
 
-+ Performance evaluation: 20%
-    + Dynamic instruction count
-
-+ A source code file : 40%
++ A source code file : 60%
     + Append detail comments in your code
 
 + A document describling your algorhithm : 40%
@@ -48,4 +47,4 @@
     + Your document will be used to determine partical credit if the code fails to run
 
 + Submit your .zip file by E-mail (yungsum@pknu.ac.kr)
-    + E-mail subject: [컴퓨터구조론] 팀장명
+    + E-mail subject: [컴퓨터구조론] 학번_이름(팀장)
