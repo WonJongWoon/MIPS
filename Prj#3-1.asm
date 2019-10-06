@@ -93,15 +93,16 @@ heapSort:
 	# Reg assignment
 	# $s0 = array, $s1 = bArray ( immutable, for restore ), $s2 = size
     	# $s3 = i ( counter ) , $s4 = j ( indexing ) $t0 = temp ( temporary value )
-
+	# $v0 = return
+	
 	move $s0, $a0			# array = $a0
     	move $s1, $a0			# bArray = $a0
 	move $s2, $a1			# size = $a1
-	la $v0, result			# $v0 = result ( empty array )
+	la $v0, result			# return = result ( empty array for return )
 	
-	move $s3, $s2			# 1. i = size
-	srl $s3, $s3, 1			# 2. i = i / 2
-	addi $s3, $s3, -1		# 3. i = i - 1 
+	move $s3, $s2			# i = size
+	srl $s3, $s3, 1			# i = i / 2
+	addi $s3, $s3, -1		# i = i - 1 
 	
 	# normal array to max heap
 	maxheap_loop:
@@ -109,7 +110,7 @@ heapSort:
 	
 	move $a0, $s0			# Argument 1 : &array
 	move $a1, $s2			# Argument 2 : size
-	move $a2, $s3			# Arguemnt 3 : i
+	move $a2, $s3			# Argument 3 : i
 	jal heapify			# heapify(&array, size, i)
 	addi $s3, $s3, -1		# i = i - 1
 	j maxheap_loop			# jump to maxheap_loop label
@@ -121,15 +122,15 @@ heapSort:
 	addi $s3, $s3, -1		# i = i - 1
 
 	mul $s4, $s3, 4			# j = i * 4
-	add $s0, $s0, $s4		# array += j <=> array = &array[size-1]
+	add $s0, $s0, $s4		# array += j
 
 	# extract max elements from heap
 	ordering_loop:
 	blt $s3, $zero, heapSort_end	# if ( i < 0 ) goto heapSort_end label
 	
 	lw $t0, 0($s1)			# temp = &array[0]
-	sw $t0, 0($v0)			# *result = temp
-	addi $v0, $v0, 4		# result++
+	sw $t0, 0($v0)			# *return = temp
+	addi $v0, $v0, 4		# return++
 	
 	move $a0, $s1			# Argument 1 : &array[0]
 	move $a1, $s0			# Argument 2 : &array[i]
@@ -141,7 +142,7 @@ heapSort:
 	jal heapify			# heapify(&array, i, 0)
 	
 	addi $s3, $s3, -1		# i = i - 1	
-	addi $s0, $s0, -4		# array-- <=> array = &array[i]
+	addi $s0, $s0, -4		# array--
 	j ordering_loop			# jump to ordering_loop label
 		
 	# Restore saved register values from stack in opposite order
