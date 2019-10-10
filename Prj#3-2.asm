@@ -51,7 +51,7 @@ input:
 	move $s0, $a0			# array = $a0
 	move $s1, $a1			# index = $a1
 	
-	mul $s2, $s1,4			# i = index * 4
+	sll $s2, $s1, 2			# i = index * 4
 	add $s0, $s0, $s2		# array += i 
 	
 	li $v0,5			# read_int syscall code = 5
@@ -121,7 +121,7 @@ heapSort:
 	move $s3, $s2			# i = size
 	addi $s3, $s3, -1		# i = i - 1
 
-	mul $s4, $s3, 4			# j = i * 4
+	sll $s4, $s3, 2			# j = i * 4
 	add $s0, $s0, $s4		# array += j 
 
 	# extract max elements from heap
@@ -195,7 +195,7 @@ heapify:
 	
 	move $s4, $s3			# parent = index
 	move $s5, $s4			# left = parent
-	mul $s5, $s5,2			# left = left * 2
+	sll $s5, $s5,1			# left = left * 2
 	
 	addi $s6, $s5, 2		# Right = Left + 2
 	addi $s5, $s5, 1		# Left = Left + 1
@@ -203,12 +203,12 @@ heapify:
 	bge $s5, $s2, branch2		# if ( left >=  size ) goto branch2
 	
 	move $s0, $a0			# array = $a0
-	mul $t0, $s4, 4			# i = 4 * parent
+	sll $t0, $s4, 2			# i = 4 * parent
 	add $s0, $s0, $t0		# array += i
 	lw $t1, 0($s0)			# $t1 = array[parent]
 	
 	move $s0, $a0			# array = $a0
-	mul $t0, $s5, 4			# i = 4 * left
+	sll $t0, $s5, 2			# i = 4 * left
 	add $s0, $s0, $t0		# array += i
 	lw $t2, 0($s0)			# $t2 = array[left]
 	
@@ -219,12 +219,12 @@ heapify:
 	bge $s6, $s2, branch3		# if ( right >= size ) goto branch3 label
 
 	move $s0, $a0			# array = $a0
-	mul $t0, $s4, 4			# i = 4 * parent
+	sll $t0, $s4, 2			# i = 4 * parent
 	add $s0, $s0, $t0       	# array += i
 	lw $t1, 0($s0)			# $t1 = array[parent]
 	
 	move $s0, $a0			# array = $a0
-	mul $t0, $s6, 4			# i = 4 * right
+	sll $t0, $s6, 2			# i = 4 * right
 	add $s0, $s0, $t0       	# array += i
 	lw $t3, 0($s0)			# $t3 = array[right]
 	
@@ -237,11 +237,11 @@ heapify:
 	
 	action:
 	move $s0, $a0			# array = $a0
-	mul $t0, $s4, 4         	# i = 4 * parent
+	sll $t0, $s4, 2         	# i = 4 * parent
 	add $t4, $s0, $t0		# array += i
 	
 	move $s0, $a0			# array = $a0
-	mul $t0, $s3, 4         	# i = 4 * index
+	sll $t0, $s3, 2         	# i = 4 * index
 	add $t5, $s0, $t0		# array += i
 	
 	move $a0, $t4			# Argument 1: &array[parent]
