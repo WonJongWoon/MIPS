@@ -84,14 +84,13 @@ multiplication:
 	
 	j calculate_loop			# jump to calculate_loop label
 	
-	
 	# Restore saved register values from stack in opposite order
 	# This is POP'ing from the stack
 	
 	multiplication_end:
 	
 	addi $t3, $s3, -1			# i = size - 1
-	mul $t3, $t3, 4				# i = i * 4
+	sll $t3, $t3, 2				# i = i * 4
 	sub $v0, $v0, $t3			# v0 -= i
 	
 	
