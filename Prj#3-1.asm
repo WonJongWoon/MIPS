@@ -51,7 +51,7 @@ input:
 	move $s0, $a0			# array = $a0
 	move $s1, $a1			# index = $a1
 	
-	mul $s2, $s1,4			# i = index * 4
+	sll $s2, $s1,2			# i = index * 4
 	add $s0, $s0, $s2		# array += i <=> array = &array[index]
 	
 	li $v0,5			# read_int syscall code = 5
@@ -121,7 +121,7 @@ heapSort:
 	move $s3, $s2			# i = size
 	addi $s3, $s3, -1		# i = i - 1
 
-	mul $s4, $s3, 4			# j = i * 4
+	sll $s4, $s3, 2			# j = i * 4
 	add $s0, $s0, $s4		# array += j
 
 	# extract max elements from heap
@@ -195,13 +195,13 @@ heapify:
 	
 	move $s4, $s3			# parent = index
 	move $s5, $s4			# left = parent
-	mul $s5, $s5,2			# left = left * 2
+	sll $s5, $s5,1			# left = left * 2
 	
 	addi $s6, $s5, 2		# Right = Left + 2
 	addi $s5, $s5, 1		# Left = Left + 1
 
 	move $t0, $s3			# i = index
-	mul $t0, $t0, 4			# i = i * 4
+	sll $t0, $t0, 2			# i = i * 4
 	
 	add $s0, $s0, $t0       	# array += i
 	move $t1, $s0			# $t1 = &array[index]
@@ -226,7 +226,7 @@ heapify:
 	bge $s6, $s2, branch3		# if ( right >= size ) goto branch3 label
 
 	move $t0, $s4           	# i = parent
-	mul $t0, $t0, 4         	# i = i * 4
+	sll $t0, $t0, 2         	# i = i * 4
 	add $t2, $s1, $t0       	# $t2 = array[parent]
 	
 	lw $t5, 0($t2)			# $t5 = array[parent]
@@ -240,7 +240,7 @@ heapify:
 	j heapify_end			# jump to heapify_end label
 	
 	action:
-	mul $t0, $s4, 4         	# i = 4 * parent
+	sll $t0, $s4, 2         	# i = 4 * parent
 	add $t2, $a0, $t0		# $t2 = array[parent]
 	
 	move $a0, $t2			# Argument 1: &array[parent]
