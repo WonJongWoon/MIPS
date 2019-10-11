@@ -11,7 +11,7 @@ main:
 	li $s2, 0			# i = 0
 	
 main_loop:
-	bge $s2, $s1, main_end		# if (i >= size) goto main_end label
+	beq $s2, $s1, main_end		# if (i == size) goto main_end label
 	move $a0, $s0			# Argument 1: &array
 	move $a1, $s2			# Argument 2: i
 	jal input			# input(&array, i)
@@ -54,7 +54,7 @@ input:
 	sll $s2, $s1, 2			# i = index * 4
 	add $s0, $s0, $s2		# array += i 
 	
-	li $v0,5			# read_int syscall code = 5
+	li $v0, 5			# read_int syscall code = 5
 	syscall				# syscall results returned in $v0
 	sw $v0, 0($s0)			# *array = $v0 
 	
@@ -185,8 +185,8 @@ heapify:
 
     	# Reg assignment
 	# $s0 = array, $s1 = bArray, $s2 = size, $s3 = index, $s4 = parent, $s5 = left, $s6 = right
-	# $t0 = i ( indexing ), $t1 = array[index], $t2 = array[paraent], $t3 = array[left]
-	# &t4 = &array[parent], $t5 = array[index]
+	# $t0 = i ( indexing ), $t1 = array[parent], $t2 = array[left], $t3 = array[right]
+	# &t4 = &array[parent], $t5 = &array[index]
 	
 	move $s0, $a0			# array = $a0
 	move $s1, $a0			# bArray = $a0
@@ -197,8 +197,8 @@ heapify:
 	move $s5, $s4			# left = parent
 	sll $s5, $s5,1			# left = left * 2
 	
-	addi $s6, $s5, 2		# Right = Left + 2
 	addi $s5, $s5, 1		# Left = Left + 1
+	addi $s6, $s5, 1		# right = left + 1
 	
 	bge $s5, $s2, branch2		# if ( left >=  size ) goto branch2
 	
@@ -375,8 +375,8 @@ main_end:
 
 .data
 
-array: 		.space 40 		# Heap Array Memory Size = Heap Array length * 4
-result:		.space 40 		# Result Array Memroy Size = Heap Array Legnth * 4
-size: 		.word 10		# Heap Array length
+array: 		.space 20 		# Heap Array Memory Size = Heap Array length * 4
+result:		.space 20 		# Result Array Memroy Size = Heap Array Legnth * 4
+size: 		.word 5			# Heap Array length
 delimiter: 	.asciiz " "		# delimiter for heap array elements printing
 newLine:	.asciiz "\n"		# line feed

@@ -51,8 +51,7 @@ multiplication:
 	move $s1, $a1				# vector = $a1
 	move $s2, $a1				# bVector = $a1
 	move $s3, $a2				# size = $a2
-	la $v0, b				# v0 = b
-	
+	la $v0, b				# v0 = b	
 	move $s4, $s3				# c = size
 	move $s5, $s3				# r = size
 	li $s6, 0				# total = 0
