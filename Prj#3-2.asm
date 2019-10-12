@@ -4,32 +4,36 @@
 
 main:
 	# Register assignments
-	# s0 = array, $s1 = size, $s2 = i ( counter )
+	# $s0 = size, $s1 = i ( counter )
 	
-	la $s0, array 			# $s0 = array
-	lw $s1, size			# $s1 = size
-	li $s2, 0			# i = 0
+	lw $s0, size				# $s0 = size
+	li $s1, 0				# i = 0
 	
-main_loop:
-	beq $s2, $s1, main_end		# if (i == size) goto main_end label
-	move $a0, $s0			# Argument 1: &array
-	move $a1, $s2			# Argument 2: i
-	jal input			# input(&array, i)
+main_for_1:
+	beq $s2, $s1, main_for_1_end		# if (i == size) goto main_end label
 	
-	addi $s2, $s2, 1		# i = i + 1
+	la $a0, array				# Argument 1: array
+	move $a1, $s1				# Argument 2: i
+	jal input				# input(array, i)
 	
-	move $a0, $s0			# Argument 1: &array
-	move $a1, $s2			# Argument 2: i
-	jal heapSort			# heapSort(&array, i)
+	la $a0, array				# Argument 1: array
+	move $a1, $s1			
+	addi $a1, $a1, 1			# Argument 2: i + 1
+	jal heapSort				# heapSort(array, i + 1)
 	
-	move $a0, $v0			# Argument 1: $v0 [ $v0 = heapSort(&array, i) ]
-	move $a1, $s2			# Argument 2: i
-	jal print			# print(&array, i)
+	move $a0, $v0				# Argument 1: $v0 = heapSort(array, i) 
+	move $a1, $s1			
+	add $a1, $a1, 1				# Argument 2: i + 1
+	jal print				# print(array, i + 1)
 	
-	j main_loop			# goto main_loop label
+main_for_1_next:
+	add $s1, $s1, 1				# i = i + 1
+	j main_for_1				# goto main_loop label
 	
+main_for_1_end:
+
 # FUNCTION: void input(int* array,int index)
-# Arguments are stored in $a0 (array), $a1 (index)
+# Arguments are stored in $a0 = array, $a1 = index
 # Return value is void
 # Return address is stored in $ra (put there by jal instruction)
 # Typical function operation is:
@@ -52,12 +56,14 @@ input:
 	move $s1, $a1			# index = $a1
 	
 	sll $s2, $s1, 2			# i = index * 4
-	add $s0, $s0, $s2		# array += i 
+	add $s0, $s0, $s2		# array = array + i
 	
 	li $v0, 5			# read_int syscall code = 5
 	syscall				# syscall results returned in $v0
 	sw $v0, 0($s0)			# *array = $v0 
 	
+input_end:
+
 	# Restore saved register values from stack in opposite order
 	# This is POP'ing from the stack
 	
@@ -67,12 +73,11 @@ input:
 	lw $s2, 0($sp)			# Restore $s2
 	addi $sp, $sp, 16		# Adjust stack pointer
 	
-	# Return from function
-	jr $ra				# Jump to addr stored in $ra
+	jr $ra				# Return from function
 	
 	
 # FUNCTION: int* heapSort(int* array,int size)
-# Arguments are stored in $a0 (array), $a1 (size)
+# Arguments are stored in $a0 = array, $a1 = size
 # Return value is $v0 ( result array )
 # Return address is stored in $ra (put there by jal instruction)
 # Typical function operation is:
@@ -91,9 +96,9 @@ heapSort:
 	sw $s4, 0($sp)			# Save $s4
 	
 	# Reg assignment
-	# $s0 = array, $s1 = bArray ( immutable, for restore ), $s2 = size
-    	# $s3 = i ( counter ) , $s4 = j ( indexing ) $t0 = temp ( temporary value )
-	# $v0 = return 
+	# $s0 = array, $s1 = bArray ( immutable, for restore ), $s2 = size, $s3 = i ( counter )
+	# $s4 = j ( indexing ) $t0 = temp ( temporary value )
+
 	
 	move $s0, $a0			# array = $a0
     	move $s1, $a0			# bArray = $a0
