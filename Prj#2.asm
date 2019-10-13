@@ -110,7 +110,7 @@ inverse:
             		
                         li $s5, 0					# col = 0        
             		inverse_for_4:
-                		beq $s5, $s2, inverse_for_3_next		# if ( col == size ) goto inverse_for_3_next label
+                		beq $s5, $s2, inverse_for_4_end		# if ( col == size ) goto inverse_for_3_next label
                 
                 		move $a0, $s0					# Argument 1: matrix
                 		move $a1, $s4					# Argument 2: in_row
@@ -223,7 +223,7 @@ print:
 
         	li $s3, 0					# col = 0
        		print_for_2:
-            		beq $s1, $s3, print_for_1_next			# if ( size == col ) goto print_for_1_next label
+            		beq $s1, $s3, print_for_2_end			# if ( size == col ) goto print_for_1_next label
             
             		li $v0, 2					# print_float syscall code = 2
             		lwc1 $f12, 0($s0)		
@@ -320,7 +320,6 @@ get_element_end:
 # Return address is stored in $ra (put there by jal instruction)
 # Typical function operation is:		
 set_element:
-
 	# This function overwrites $s0 and $s1, $s2, $s3, $s4
 	# We should save those on the stack
 	# This is PUSH'ing onto the stack
@@ -347,7 +346,6 @@ set_element:
 	
 	sll $s4, $s2, 2					# i = 4 * col
 	add $s0, $s0, $s4				# matrix = matrix + i
-	
 	sw $s3, 0($s0)					# *matrix = element
 	
 set_element_end:
@@ -367,9 +365,19 @@ set_element_end:
 	
 .data
 
-A: 		.float 1, 5, 6, 4, 5, 1, 10, 3, 6
-Identity: 	.float 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0
-size: 		.word 3
+A: 		.float  2, 10, 12	# Matrix A
+		.float 10,  5, 15 
+		.float  6,  9,  3
 
-delimiter: 	.asciiz " "				# delimiter for matrix`s elements printing
-newLine:	.asciiz "\n"				# line feed
+Identity: 	.float 1, 0, 0 		# Identity Matrix
+		.float 0, 1, 0
+		.float 0, 0, 1
+		
+
+size: 		.word 3			# Matrix Size
+
+delimiter: 	.asciiz " "		# delimiter for matrix`s elements printing
+newLine:	.asciiz "\n"		# line feed
+
+
+
