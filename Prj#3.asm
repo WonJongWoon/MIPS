@@ -38,6 +38,46 @@ main_end:
 	li $v0, 10			# exit syscall code = 10
 	syscall
 	
+# FUNCTION: int get_element(int* array, int index)
+# Arguments are stored in $a0 = array, $a1 = index
+# Return value is $v0
+# Return address is stored in $ra (put there by jal instruction)
+# Typical function operation is:		
+get_element:
+
+	# This function overwrites $s0 and $s1, $s2
+	# We should save those on the stack
+	# This is PUSH'ing onto the stack
+	
+	addi $sp, $sp, -16	    			# Adjust stack pointer
+	sw $ra, 12($sp)		    			# Save $ra
+	sw $s0, 8($sp)		    			# Save $s0
+	sw $s1, 4($sp)		    			# Save $s1
+	sw $s2, 0($sp)		    			# Save $s2
+	
+	# Reg assignment
+	# $s0 = array, $s1 = index, $s2 = i ( indexing )
+	
+	move $s0, $a0					# $s0 = array
+	move $s1, $a1					# $s1 = index
+	
+	sll $s2, $s1, 2					# i = 4 * index
+	add $s0, $s0, $s2				# array = array + i
+	
+	lw $v0, 0($s0)					# $v0 = *matrix
+get_element_end:
+
+	# Restore saved register values from stack in opposite order
+	# This is POP'ing from the stack
+		
+	lw $ra, 12($sp)		    			# Restore $ra
+	lw $s0, 8($sp)		    			# Restore $s0
+	lw $s1, 4($sp)		    			# Restore $s1
+	lw $s2, 0($sp)		    			# Restore $s2
+	addi $sp, $sp, 16	    			# Adjust stack pointer
+	
+	jr $ra						# Return from function
+		
 # FUNCTION: void input(int* array,int index)
 # Arguments are stored in $a0 = array, $a1 = index
 # Return value is void
@@ -89,7 +129,7 @@ input_end:
 # Typical function operation is:
 heapSort:
 
-	# This function overwrites $s0 and $s1, $s2, $s3, $s4
+	# This function overwrites $s0 and $s1, $s1, $s2, $s4
 	# We should save those on the stack
 	# This is PUSH'ing onto the stack
 	
@@ -99,68 +139,66 @@ heapSort:
 	sw $s1, 12($sp)			# Save $s1
 	sw $s2, 8($sp)			# Save $s2
 	sw $s3, 4($sp)			# Save $s3
-	sw $s4, 0($sp)			# Save $s4
+	sw $s4, 0($sp)			# save $s4
 	
 	# Reg assignment
-	# $s0 = array, $s1 = bArray ( immutable, for restore ), $s2 = size, $s3 = i ( counter )
-	# $s4 = j ( indexing ) $t0 = temp ( temporary value )
+	# $s0 = array, $s1 = size, $s2 = i ( counter ), $s3 = j ( indexing )
+	# $s4 = ret, $t0 = temp ( temporary value )
 
-	
 	move $s0, $a0			# array = $a0
-    	move $s1, $a0			# bArray = $a0
-	move $s2, $a1			# size = $a1
-	la $v0, result			# return = result ( empty array for return )
+	move $s1, $a1			# size = $a1
+	la $s4, result			# return = result ( empty array for return )
 	
-	move $s3, $s2			# i = size
-	srl $s3, $s3, 1			# i = i / 2
-	addi $s3, $s3, -1		# i = i - 1 
+	move $s2, $s1			# i = size
+	srl $s2, $s2, 1			# i = i / 2
+	addi $s2, $s2, -1		# i = i - 1 
 	
 	# normal array to max heap
 	maxheap_for_1:
-		blt $s3, $zero, maxheap_for_1_end	# if ( i < 0 ) goto ordering_set label
+		blt $s2, $zero, maxheap_for_1_end	# if ( i < 0 ) goto ordering_set label
 	
 		move $a0, $s0			# Argument 1 : array
-		move $a1, $s2			# Argument 2 : size
-		move $a2, $s3			# Argument 3 : i
+		move $a1, $s1			# Argument 2 : size
+		move $a2, $s2			# Argument 3 : i
 		jal heapify			# heapify(array, size, i)
 
 	maxheap_for_1_next:
-		add $s3, $s3, -1
+		addi $s2, $s2, -1	# i = i - 1
 		j maxheap_for_1		# jump to maxheap_for_1 label
 		
 	maxheap_for_1_end:
 	
-	# setting for ordering_for
-	move $s3, $s2			# i = size
-	addi $s3, $s3, -1		# i = i - 1
 
-	sll $s4, $s3, 2			# j = i * 4
-	add $s0, $s0, $s4		# array += j 
-
-	# extract max elements from heap
+	addi $s2, $s1, -1		# i = size - 1
 	ordering_for_1:
-		blt $s3, $zero, ordering_for_1_end	# if ( i < 0 ) goto ordering_for_1_end label
+		blt $s2, $zero, ordering_for_1_end	# if ( i < 0 ) goto ordering_for_1_end label
 	
-		lw $t0, 0($s1)			# temp = array[0]
-		sw $t0, 0($v0)			# *result = temp
-		addi $v0, $v0, 4		# result++
-	
-		move $a0, $s1			# Argument 1 : &array[0]
-		move $a1, $s0			# Argument 2 : &array[i]
+		move $a0, $s0			# Argument 1: array
+		move $a1, $zero			# Argument 2: 0
+		jal get_element			# get_element(array, 0)
+		
+		sw $v0, 0($s4)			# *ret = $v0 = get_element(array, 0)
+
+		move $a0, $s0			# Argument 1 : &array[0]
+		mul $s3, $s2, 4			# j = 4 * i
+		move $a1, $s0			# $a1 = array
+		add $a1, $a1, $s3		# Argument 2 : &array[i] = array + 4 * j
 		jal swap			# swap(&array[0], &array[i])
 	
-		move $a0, $s1			# Argument 1 : array
-		move $a1, $s3			# Argument 2 : i
+		move $a0, $s0			# Argument 1 : array
+		move $a1, $s2			# Argument 2 : i
 		move $a2, $zero			# Argument 3 : 0
 		jal heapify			# heapify(array, i, 0)
 	
 	ordering_for_1_next:
-		addi $s3, $s3, -1		# i = i - 1	
-		addi $s0, $s0, -4		# array--
+		addi $s2, $s2, -1		# i = i - 1	
+		addi $s4, $s4, 4		# ret++
 		j ordering_for_1		# jump to ordering_for_1 label
 		
 	ordering_for_1_end:	
-		la $v0, result			# restore result start address
+		mul $s3, $s1, 4			# j = size * 4
+		sub $s4, $s4, $s3		# ret = ret - j
+		move $v0, $s4			# $v0 = ret
 	
 heapSort_end:
 
@@ -184,7 +222,7 @@ heapSort_end:
 # Typical function operation is:
 heapify:
 
-	# This function overwrites $s0 and $s2, $s3, $s4, $s5, $s6
+	# This function overwrites $s0 and $s1, $s2, $s3, $s4, $s5, $s6
 	# We should save those on the stack
 	# This is PUSH'ing onto the stack
 	
@@ -215,38 +253,38 @@ heapify:
 	addi $s5, $s5, 1		# Left = Left + 1
 	addi $s6, $s5, 1		# right = left + 1
 	
-	bge $s5, $s2, branch2		# if ( left >=  size ) goto branch2
+	bge $s5, $s2, branch1		# if ( left >=  size ) goto branch1
 	
-	move $s0, $a0			# array = $a0
-	sll $t0, $s4, 2			# i = 4 * parent
-	add $s0, $s0, $t0		# array += i
-	lw $t1, 0($s0)			# $t1 = array[parent]
+	move $a0, $s0			# Argument 1: array
+	move $a1, $s4			# Argument 2: parent
+	jal get_element			# get_element(array, parent)
+	move $t1, $v0			# $t1 = $v0 = get_element(array, parent)
 	
-	move $s0, $a0			# array = $a0
-	sll $t0, $s5, 2			# i = 4 * left
-	add $s0, $s0, $t0		# array += i
-	lw $t2, 0($s0)			# $t2 = array[left]
+	move $a0, $s0			# Argument 1: array
+	move $a1, $s5			# Argument 2: left
+	jal get_element 		# get_element(array, left)
+	move $t2, $v0			# $t2 = $v0 = get_element(array, left)
 	
-	bge $t1, $t2, branch2		# if ( array[paraent] >= array[left] ) goto branch2 label
+	bge $t1, $t2, branch1		# if ( array[paraent] >= array[left] ) goto branch1 label
 	move $s4, $s5           	# parent = left
 	
-	branch2:	
-	bge $s6, $s2, branch3		# if ( right >= size ) goto branch3 label
+	branch1:	
+	bge $s6, $s2, branch2		# if ( right >= size ) goto branch2 label
 
-	move $s0, $a0			# array = $a0
-	sll $t0, $s4, 2			# i = 4 * parent
-	add $s0, $s0, $t0       	# array += i
-	lw $t1, 0($s0)			# $t1 = array[parent]
+	move $a0, $s0			# Argument 1: array
+	move $a1, $s4			# Argument 2: parent
+	jal get_element 		# get_element(array, parent)
+	move $t1, $v0			# $t1 = $v0 = get_element(array, parent)
+
+	move $a0, $s0			# Argument 1: array
+	move $a1, $s6			# Argument 2: right
+	jal get_element 		# get_element(array, right)
+	move $t3, $v0			# $t3 = $v0 = get_element(array, right)
 	
-	move $s0, $a0			# array = $a0
-	sll $t0, $s6, 2			# i = 4 * right
-	add $s0, $s0, $t0       	# array += i
-	lw $t3, 0($s0)			# $t3 = array[right]
-	
-	bge $t1, $t3, branch3		# if ( array[parent] >= array[right]) goto branch3 label
+	bge $t1, $t3, branch2		# if ( array[parent] >= array[right]) goto branch2 label
 	move $s4, $s6           	# parent = right
 	
-	branch3:
+	branch2:
 	bne $s3, $s4, action		# if ( index != parent ) goto action label
 	j heapify_end			# jump to heapify_end label
 	
@@ -263,10 +301,10 @@ heapify:
 	move $a1, $t5			# Argument 2: &array[index]
 	jal swap			# swap(&array[parent], &array[index])	
 	
-	move $a0, $s1			# Argument 1: &array
+	move $a0, $s1			# Argument 1: array
 	move $a1, $s2			# Argument 2: size
 	move $a2, $s4			# Argument 3: parent
-	jal heapify             	# heapify(&array, size, parent)
+	jal heapify             	# heapify(array, size, parent)
 	
 	# Restore saved register values from stack in opposite order
 	# This is POP'ing from the stack
