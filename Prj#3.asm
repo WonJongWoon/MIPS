@@ -220,105 +220,99 @@ heapSort_end:
 # Typical function operation is:
 heapify:
 
-	# This function overwrites $s0 and $s1, $s2, $s3, $s4, $s5, $s6
+	# This function overwrites $s0 and $s1, $s2, $s3, $s4, $s5
 	# We should save those on the stack
 	# This is PUSH'ing onto the stack
 	
-	addi $sp, $sp, -32	    	# Adjust stack pointer
-	sw $ra, 28($sp)		    	# Save $ra
-	sw $s0, 24($sp)		    	# Save $s0
-	sw $s1, 20($sp)		    	# Save $s1
-	sw $s2, 16($sp)		    	# Save $s2
-	sw $s3, 12($sp)		    	# Save $s3
-	sw $s4, 8($sp)		    	# Save $s4
-	sw $s5, 4($sp)		    	# Save $s5
-	sw $s6, 0($sp)			# Save $s6
+	addi $sp, $sp, -28	    	# Adjust stack pointer
+	sw $ra, 24($sp)		    	# Save $ra
+	sw $s0, 20($sp)		    	# Save $s0
+	sw $s1, 16($sp)		    	# Save $s1
+	sw $s2, 12($sp)		    	# Save $s2
+	sw $s3, 8($sp)		    	# Save $s3
+	sw $s4, 4($sp)		    	# Save $s4
+	sw $s5, 0($sp)			    # Save $s5
 
     	# Reg assignment
-	# $s0 = array, $s1 = bArray, $s2 = size, $s3 = index, $s4 = parent, $s5 = left, $s6 = right
+	# $s0 = array, $s1 = size, $s2 = index, $s3 = parent, $s4 = left, $s5 = right
 	# $t0 = i ( indexing ), $t1 = array[parent], $t2 = array[left], $t3 = array[right]
 	# &t4 = &array[parent], $t5 = &array[index]
 	
 	move $s0, $a0			# array = $a0
-	move $s1, $a0			# bArray = $a0
-	move $s2, $a1			# size = $a1
-	move $s3, $a2			# index = $a2
+	move $s1, $a1			# size = $a1
+	move $s2, $a2			# index = $a2
 	
-	move $s4, $s3			# parent = index
-	move $s5, $s4			# left = parent
-	sll $s5, $s5,1			# left = left * 2
+	move $s3, $s2			# parent = index
+	move $s4, $s3			# left = parent
+	sll $s4, $s4,1			# left = left * 2
 	
-	addi $s5, $s5, 1		# Left = Left + 1
-	addi $s6, $s5, 1		# right = left + 1
+	addi $s4, $s4, 1		# Left = Left + 1
+	addi $s5, $s4, 1		# right = left + 1
 	
-	bge $s5, $s2, branch1		# if ( left >=  size ) goto branch1
+	bge $s4, $s1, branch1		# if ( left >=  size ) goto branch1
 	
 	move $a0, $s0			# Argument 1: array
-	move $a1, $s4			# Argument 2: parent
+	move $a1, $s3			# Argument 2: parent
 	jal get_element			# get_element(array, parent)
 	move $t1, $v0			# $t1 = $v0 = get_element(array, parent)
 	
 	move $a0, $s0			# Argument 1: array
-	move $a1, $s5			# Argument 2: left
+	move $a1, $s4			# Argument 2: left
 	jal get_element 		# get_element(array, left)
 	move $t2, $v0			# $t2 = $v0 = get_element(array, left)
 	
 	bge $t1, $t2, branch1		# if ( array[paraent] >= array[left] ) goto branch1 label
-	move $s4, $s5           	# parent = left
+	move $s3, $s4           	# parent = left
 	
 	branch1:	
-		bge $s6, $s2, branch2		# if ( right >= size ) goto branch2 label
+		bge $s5, $s1, branch2		# if ( right >= size ) goto branch2 label
 
 		move $a0, $s0			# Argument 1: array
-		move $a1, $s4			# Argument 2: parent
+		move $a1, $s3			# Argument 2: parent
 		jal get_element 		# get_element(array, parent)
 		move $t1, $v0			# $t1 = $v0 = get_element(array, parent)
 
 		move $a0, $s0			# Argument 1: array
-		move $a1, $s6			# Argument 2: right
+		move $a1, $s5			# Argument 2: right
 		jal get_element 		# get_element(array, right)
 		move $t3, $v0			# $t3 = $v0 = get_element(array, right)
 	
 		bge $t1, $t3, branch2		# if ( array[parent] >= array[right]) goto branch2 label
-		move $s4, $s6           	# parent = right
+		move $s3, $s5           	# parent = right
 	
 	branch2:
-		bne $s3, $s4, action		# if ( index != parent ) goto action label
+		bne $s2, $s3, action		# if ( index != parent ) goto action label
 		j heapify_end			# jump to heapify_end label
 	
 		action:
-			move $s0, $a0			# array = $a0
-			sll $t0, $s4, 2         	# i = 4 * parent
+			sll $t0, $s3, 2         	# i = 4 * parent
 			add $t4, $s0, $t0		# array += i
-	
-			move $s0, $a0			# array = $a0
-			sll $t0, $s3, 2         	# i = 4 * index
+
+			sll $t0, $s2, 2         	# i = 4 * index
 			add $t5, $s0, $t0		# array += i
 	
 			move $a0, $t4			# Argument 1: &array[parent]
 			move $a1, $t5			# Argument 2: &array[index]
 			jal swap			# swap(&array[parent], &array[index])	
 	
-			move $a0, $s1			# Argument 1: array
-			move $a1, $s2			# Argument 2: size
-			move $a2, $s4			# Argument 3: parent
+			move $a0, $s0			# Argument 1: array
+			move $a1, $s1			# Argument 2: size
+			move $a2, $s3			# Argument 3: parent
 			jal heapify             	# heapify(array, size, parent)
-	
-	
+		
 heapify_end:
 
 	# Restore saved register values from stack in opposite order
 	# This is POP'ing from the stack
 	
-	lw $ra, 28($sp)		    	# Restore $ra
-	lw $s0, 24($sp)		    	# Restore $s0
-	lw $s1, 20($sp)		    	# Restore $s1
-	lw $s2, 16($sp)		    	# Restore $s2
-	lw $s3, 12($sp)		    	# Restore $s3
-	lw $s4, 8($sp)		    	# Restore $s4
-	lw $s5, 4($sp)		    	# Restore $s5
-    	lw $s6, 0($sp)          	# Restore $s6
-	addi $sp, $sp, 32	    	# Adjust stack pointer
+	lw $ra, 24($sp)		    	# Restore $ra
+	lw $s0, 20($sp)		    	# Restore $s0
+	lw $s1, 16($sp)		    	# Restore $s1
+	lw $s2, 12($sp)		    	# Restore $s2
+	lw $s3, 8($sp)		    	# Restore $s3
+	lw $s4, 4($sp)		    	# Restore $s4
+    	lw $s5, 0($sp)          	# Restore $s5
+	addi $sp, $sp, 28	    	# Adjust stack pointer
 	
 	jr $ra			        # Return from function
 	
