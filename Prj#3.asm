@@ -7,31 +7,37 @@ main:
 	# $s0 = size, $s1 = i ( counter )
 	
 	lw $s0, size				# $s0 = size
+	
 	li $s1, 0				# i = 0
+	main_for_1:
+		beq $s0, $s1, main_for_1_end		# if ( size == i ) goto main_for_1_end
 	
-main_for_1:
-	beq $s2, $s1, main_for_1_end		# if (i == size) goto main_end label
+		la $a0, array				# Argument 1: array
+		move $a1, $s1				# Argument 2: i
+		jal input				# input(array, i)
 	
-	la $a0, array				# Argument 1: array
-	move $a1, $s1				# Argument 2: i
-	jal input				# input(array, i)
+		la $a0, array				# Argument 1: array
+		move $a1, $s1			
+		addi $a1, $a1, 1			# Argument 2: i + 1
+		jal heapSort				# heapSort(array, i + 1)
 	
-	la $a0, array				# Argument 1: array
-	move $a1, $s1			
-	addi $a1, $a1, 1			# Argument 2: i + 1
-	jal heapSort				# heapSort(array, i + 1)
+		move $a0, $v0				# Argument 1: $v0 = heapSort(array, i) 
+		move $a1, $s1			
+		add $a1, $a1, 1				# Argument 2: i + 1
+		jal print				# print(array, i + 1)
 	
-	move $a0, $v0				# Argument 1: $v0 = heapSort(array, i) 
-	move $a1, $s1			
-	add $a1, $a1, 1				# Argument 2: i + 1
-	jal print				# print(array, i + 1)
+	main_for_1_next:
+		add $s1, $s1, 1				# i = i + 1
+		j main_for_1				# goto main_for_1 label
 	
-main_for_1_next:
-	add $s1, $s1, 1				# i = i + 1
-	j main_for_1				# goto main_loop label
+	main_for_1_end:
+		li $v0, 10				# exit syscall code = 10
+		syscall
+		
+main_end:	
+	li $v0, 10			# exit syscall code = 10
+	syscall
 	
-main_for_1_end:
-
 # FUNCTION: void input(int* array,int index)
 # Arguments are stored in $a0 = array, $a1 = index
 # Return value is void
@@ -110,19 +116,21 @@ heapSort:
 	addi $s3, $s3, -1		# i = i - 1 
 	
 	# normal array to max heap
-	maxheap_loop:
-	blt $s3, $zero, ordering_set	# if ( i < 0 ) goto ordering_set label
+	maxheap_for_1:
+		blt $s3, $zero, maxheap_for_1_end	# if ( i < 0 ) goto ordering_set label
 	
-	move $a0, $s0			# Argument 1 : &array
-	move $a1, $s2			# Argument 2 : size
-	move $a2, $s3			# Argument 3 : i
-	jal heapify			# heapify(&array, size, i)
-	addi $s3, $s3, -1		# i = i - 1
-	j maxheap_loop			# jump to maxheap_loop label
+		move $a0, $s0			# Argument 1 : array
+		move $a1, $s2			# Argument 2 : size
+		move $a2, $s3			# Argument 3 : i
+		jal heapify			# heapify(array, size, i)
+
+	maxheap_for_1_next:
+		add $s3, $s3, -1
+		j maxheap_for_1		# jump to maxheap_for_1 label
+		
+	maxheap_for_1_end:
 	
-	# setting for ordering_loop
-	ordering_set:
-	
+	# setting for ordering_for
 	move $s3, $s2			# i = size
 	addi $s3, $s3, -1		# i = i - 1
 
@@ -130,32 +138,35 @@ heapSort:
 	add $s0, $s0, $s4		# array += j 
 
 	# extract max elements from heap
-	ordering_loop:
-	blt $s3, $zero, heapSort_end	# if ( i < 0 ) goto heapSort_end label
+	ordering_for_1:
+		blt $s3, $zero, ordering_for_1_end	# if ( i < 0 ) goto ordering_for_1_end label
 	
-	lw $t0, 0($s1)			# temp = &array[0]
-	sw $t0, 0($v0)			# *result = temp
-	addi $v0, $v0, 4		# result++
+		lw $t0, 0($s1)			# temp = array[0]
+		sw $t0, 0($v0)			# *result = temp
+		addi $v0, $v0, 4		# result++
 	
-	move $a0, $s1			# Argument 1 : &array[0]
-	move $a1, $s0			# Argument 2 : &array[i]
-	jal swap			# swap(&array[0], &array[i])
+		move $a0, $s1			# Argument 1 : &array[0]
+		move $a1, $s0			# Argument 2 : &array[i]
+		jal swap			# swap(&array[0], &array[i])
 	
-	move $a0, $s1			# Argument 1 : &array
-	move $a1, $s3			# Argument 2 : i
-	move $a2, $zero			# Argument 3 : 0
-	jal heapify			# heapify(&array, i, 0)
+		move $a0, $s1			# Argument 1 : array
+		move $a1, $s3			# Argument 2 : i
+		move $a2, $zero			# Argument 3 : 0
+		jal heapify			# heapify(array, i, 0)
 	
-	addi $s3, $s3, -1		# i = i - 1	
-	addi $s0, $s0, -4		# array--
-	j ordering_loop			# jump to ordering_loop label
+	ordering_for_1_next:
+		addi $s3, $s3, -1		# i = i - 1	
+		addi $s0, $s0, -4		# array--
+		j ordering_for_1		# jump to ordering_for_1 label
 		
+	ordering_for_1_end:	
+		la $v0, result			# restore result start address
+	
+heapSort_end:
+
 	# Restore saved register values from stack in opposite order
 	# This is POP'ing from the stack
-	
-	heapSort_end:
-	la $v0, result			# restore result start address
-	
+
 	lw $ra, 20($sp)			# Restore $ra
 	lw $s0, 16($sp)			# Restore $s0
 	lw $s1, 12($sp)			# Restore $s1
@@ -164,11 +175,10 @@ heapSort:
 	lw $s4, 0($sp)			# Restore $s4
 	addi $sp, $sp, 24		# Adjust stack pointer
 
-	# Return from function
-	jr $ra				# Jump to addr stored in $ra	
+	jr $ra				# Return from function
 
 # FUNCTION: void heapify(int* array,int size, int index)
-# Arguments are stored in $a0 (array), $a1 (size), $a2 (index)
+# Arguments are stored in $a0 = array, $a1 = size, $a2 = index
 # Return value is void
 # Return address is stored in $ra (put there by jal instruction)
 # Typical function operation is:
@@ -277,7 +287,7 @@ heapify:
 	
 	
 # FUNCTION: void print(int* array,int size)
-# Arguments are stored in $a0 (array), $a1 (size)
+# Arguments are stored in $a0 = array, $a1 = size
 # Return value is void
 # Return address is stored in $ra (put there by jal instruction)
 # Typical function operation is:
@@ -298,32 +308,33 @@ print:
 	
 	move $s0, $a0			# array = $a0
 	move $s1, $a1			# size = $a1
+	
 	li $s2, 0			# i = 0
+	print_for_1:
+		beq $s1, $s2, print_for_1_end	# if ( size == i ) goto print_for_1_end label
 		
-print_loop:
-	li $v0, 1			# print_int syscall code = 1
-	lw $a0, 0($s0)		
-	syscall
-	
-	addi $s2, $s2, 1		# i = i + 1
-	addi $s0, $s0, 4		# array++
-	
-	beq $s2, $s1, print_end		# if (i == size) goto print_end label
+		li $v0, 1			# print_int syscall code = 1
+		lw $a0, 0($s0)		
+		syscall
 		
-	# Print delimiter
-	li $v0, 4			# print_string syscall code = 4
-	la $a0, delimiter
-	syscall
-	
-	j print_loop			# Jump to loop
-
+		# Print delimiter
+		li $v0, 4			# print_string syscall code = 4
+		la $a0, delimiter
+		syscall
+		
+	print_for_1_next:
+		add $s2, $s2, 1			# i = i + 1
+		addi $s0, $s0, 4		# array++
+		j print_for_1			# Jump to print_for_1_label
+		
+	print_for_1_end:
+		# Print newLine	
+		li $v0, 4			# print_string syscall code = 4
+		la $a0, newLine
+		syscall
+			
 print_end:
 
-	# Print newLine	
-	li $v0, 4			# print_string syscall code = 4
-	la $a0, newLine
-	syscall
-	
 	# Restore saved register values from stack in opposite order
 	# This is POP'ing from the stack
 	
@@ -333,12 +344,11 @@ print_end:
 	lw $s2, 0($sp)			# Restore $s2
 	addi $sp, $sp, 16		# Adjust stack pointer
 	
-	# Return from function
-	jr $ra				# Jump to addr stored in $ra		
+	jr $ra				# Return from function		
 
 
-# FUNCTION: void swap(int *a, int *b)
-# Arguments are stored in $a0 (a), $a1 (b)
+# FUNCTION: void swap(int* a, int* b)
+# Arguments are stored in $a0 = a , $a1 = b
 # Return value is void
 # Return address is stored in $ra (put there by jal instruction)
 # Typical function operation is:
@@ -362,6 +372,8 @@ swap:
 	sw $s1, 0($a0)			# *a = val2
 	sw $s0, 0($a1)			# *b = val1
 	
+swap_end:
+
 	# Restore saved register values from stack in opposite order
 	# This is POP'ing from the stack
 	
@@ -370,12 +382,8 @@ swap:
 	lw $s1, 0($sp)			# Resotre $s1
 	addi $sp, $sp,12		# Adjust stack pointer
 	
-	# Return from function
-	jr $ra				# Jump to addr stored in $ra			
+	jr $ra				# Return from function		
 
-main_end:	
-	li $v0, 10			# exit syscall code = 10
-	syscall
 
 
 .data
