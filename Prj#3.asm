@@ -143,11 +143,18 @@ heapSort:
 	
 	# Reg assignment
 	# $s0 = array, $s1 = size, $s2 = i ( counter ), $s3 = j ( indexing )
-	# $s4 = ret, $t0 = temp ( temporary value )
+	# $s4 = ret ( allocate address in heap ), $t0 = temp ( temporary value )
 
 	move $s0, $a0			# array = $a0
 	move $s1, $a1			# size = $a1
-	la $s4, result			# return = result ( empty array for return )
+	
+	sll $t0, $s1, 2			# $t0 = size * 4
+	
+	li $v0, 9			# allocate memory in heap syscall code = 9
+	move $a0, $t0 			# Argument 1: 4 * size ( why, first argument is memory size )
+	syscall			
+	
+	move $s4, $v0			# ret = malloc(4*size);
 	
 	move $s2, $s1			# i = size
 	srl $s2, $s2, 1			# i = i / 2
@@ -231,7 +238,7 @@ heapify:
 	sw $s2, 12($sp)		    	# Save $s2
 	sw $s3, 8($sp)		    	# Save $s3
 	sw $s4, 4($sp)		    	# Save $s4
-	sw $s5, 0($sp)			    # Save $s5
+	sw $s5, 0($sp)			# Save $s5
 
     	# Reg assignment
 	# $s0 = array, $s1 = size, $s2 = index, $s3 = parent, $s4 = left, $s5 = right
@@ -416,11 +423,9 @@ swap_end:
 	jr $ra				# Return from function		
 
 
-
 .data
 
-array: 		.space 20 		# Heap Array Memory Size = Heap Array length * 4
-result:		.space 20 		# Result Array Memroy Size = Heap Array Legnth * 4
-size: 		.word 5			# Heap Array length
+array: 		.space 40 		# Heap Array Memory Size = Heap Array length * 4
+size: 		.word 10		# Heap Array length
 delimiter: 	.asciiz " "		# delimiter for heap array elements printing
 newLine:	.asciiz "\n"		# line feed
