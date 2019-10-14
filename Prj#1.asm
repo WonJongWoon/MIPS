@@ -20,25 +20,25 @@ main:
 # Return value is $v0
 # Return address is stored in $ra (put there by jal instruction)
 # Typical function operation is:
-
 multiplication:
 
 	# This function overwrites $s0 and $s1, $s2, $s3, $s4, $s5
 	# We should save those on the stack
 	# This is PUSH'ing onto the stack
 	
-	addi $sp, $sp, -28			# Adjust stack pointer
-	sw $ra, 24($sp)				# Save $ra
-	sw $s0, 20($sp)				# Save $s0
-	sw $s1, 16($sp)				# Save $s1
-	sw $s2, 12($sp)				# Save $s2
-	sw $s3, 8($sp)				# Save $s3
-	sw $s4, 4($sp)				# Save $s4
-	sw $s5, 0($sp)				# Save $s5
+	addi $sp, $sp, -32			# Adjust stack pointer
+	sw $ra, 28($sp)				# Save $ra
+	sw $s0, 24($sp)				# Save $s0
+	sw $s1, 20($sp)				# Save $s1
+	sw $s2, 16($sp)				# Save $s2
+	sw $s3, 12($sp)				# Save $s3
+	sw $s4, 8($sp)				# Save $s4
+	sw $s5, 4($sp)				# Save $s5
+	sw $s6, 0($sp)				# Save $s6
 	
 	# Reg assignmnet
 	# $s0 = matrix, $s1 = vector, $s2 = size, $s3 = row ( row counter )
-	# $s4 = col ( column counter ), $s5 = total
+	# $s4 = col ( column counter ), $s5 = total, $s6 = ret ( return )
 	# $t0 = val1, $t1 = val2, $t2 = sum, $t3 = i ( indexing )
 	
 	move $s0, $a0				# matrix = $a0
@@ -49,8 +49,10 @@ multiplication:
 		
 	li $v0, 9				# allocate memory in heap syscall code = 9
 	move $a0, $t3				# Argument 1: 4 * size ( why, first argument is memory size )
-	syscall	
+	syscall					# $v0 = malloc(4 * size)
 	
+	move $s6, $v0				# ret = $v0
+		
 	li $s5, 0				# total = 0
 	li $s3, 0				# row = 0
 	multiplication_for_1:
@@ -73,8 +75,8 @@ multiplication:
 			j multiplication_for_2			# jump to multiplication_for_2 label
 	
 		multiplication_for_2_end:
-			sw $s5, 0($v0)				# *v0 = total
-			add $v0, $v0, 4				# v0++
+			sw $s5, 0($s6)				# *ret = total
+			add $s6, $s6, 4				# ret++
 			
 			sll $t3, $s2, 2				# i = size * 4
 			sub $s1, $s1, $t3			# vector = &vector[0]
@@ -86,22 +88,23 @@ multiplication:
 		j multiplication_for_1			# jump to multiplication_for_1
 	
 	multiplication_for_1_end:
-		sll $t3, $s3, 2				# i = size * 4
-		sub $v0, $v0, $t3			# v0 = &v0[0]
+		sll $t3, $s2, 2				# i = size * 4
+		sub $v0, $s6, $t3			# v0 = &ret[0]
 		
 multiplication_end:
 	
 	# Restore saved register values from stack in opposite order
 	# This is POP'ing from the stack
 	
-	lw $ra, 24($sp)				# Restore $ra
-	lw $s0, 20($sp)				# Restore $s0
-	lw $s1, 16($sp)				# Restore $s1
-	lw $s2, 12($sp)				# Restore $s2
-	lw $s3, 8($sp)				# Restore $s3
-	lw $s4, 4($sp)				# Restore $s4
-	lw $s5, 0($sp)				# Restore $s5
-	addi $sp, $sp, 28			# Adjust stack pointer
+	lw $ra, 28($sp)				# Restore $ra
+	lw $s0, 24($sp)				# Restore $s0
+	lw $s1, 20($sp)				# Restore $s1
+	lw $s2, 16($sp)				# Restore $s2
+	lw $s3, 12($sp)				# Restore $s3
+	lw $s4, 8($sp)				# Restore $s4
+	lw $s5, 4($sp)				# Restore $s5
+	lw $s6, 0($sp)				# Restore $s6
+	addi $sp, $sp, 32			# Adjust stack pointer
 	
 	jr $ra					# Return from function		
 
