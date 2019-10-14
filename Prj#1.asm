@@ -44,7 +44,12 @@ multiplication:
 	move $s0, $a0				# matrix = $a0
 	move $s1, $a1				# vector = $a1
 	move $s2, $a2				# size = $a2
-	la $v0, b				# v0 = b
+	
+	sll $t3, $s2, 2				# i = 4 * size
+		
+	li $v0, 9				# allocate memory in heap syscall code = 9
+	move $a0, $t3				# Argument 1: 4 * size ( why, first argument is memory size )
+	syscall	
 	
 	li $s5, 0				# total = 0
 	li $s3, 0				# row = 0
@@ -158,7 +163,6 @@ print_end:
 
 .data		
 A:		.word 1, 1, 9, 6, 5, 5, 1, 2, 1	# Set elements of Matrix A ( size x size )
-x:		.word 2, 5, 9			# Set elements of Vector X ( size x 1 )		
-b:		.space 12			# result vector ( size * size )			
+x:		.word 2, 5, 9			# Set elements of Vector X ( size x 1 )				
 size:		.word 3				# Matrix, Vector size
 delimiter:    	.asciiz	"\n"			# line feed
