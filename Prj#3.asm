@@ -185,7 +185,7 @@ heapSort:
 		sw $v0, 0($s4)			# *ret = $v0 = get_element(array, 0)
 
 		move $a0, $s0			# Argument 1 : &array[0]
-		mul $s3, $s2, 4			# j = 4 * i
+		sll $s3, $s2, 2			# j = 4 * i
 		move $a1, $s0			# $a1 = array
 		add $a1, $a1, $s3		# Argument 2 : &array[i] = array + 4 * j
 		jal swap			# swap(&array[0], &array[i])
@@ -201,7 +201,7 @@ heapSort:
 		j ordering_for_1		# jump to ordering_for_1 label
 		
 	ordering_for_1_end:	
-		mul $s3, $s1, 4			# j = size * 4
+		sll $s3, $s1, 2			# j = size * 4
 		sub $s4, $s4, $s3		# ret = ret - j
 		move $v0, $s4			# $v0 = ret
 	
